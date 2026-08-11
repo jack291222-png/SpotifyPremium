@@ -384,6 +384,11 @@ func emptyLyricsData(originalLyrics: Lyrics? = nil) -> Data? {
 
 func getLyricsDataForCurrentTrack(_ originalPath: String, originalLyrics: Lyrics? = nil) throws -> Data {
     
+    // Pass through native Spotify lyrics if available
+    if let originalLyrics = originalLyrics {
+        return try originalLyrics.serializedData()
+    }
+
     // track id from URL path; player objects are nil on 9.1.6
     // path: /color-lyrics/v2/track/{trackId}
     guard let trackIdentifier = extractTrackId(from: originalPath), !trackIdentifier.isEmpty else {
@@ -397,10 +402,6 @@ func getLyricsDataForCurrentTrack(_ originalPath: String, originalLyrics: Lyrics
     }
 
     // Use a prefetched result if one finished in time for this track.
-    // Note: if displayOriginalColors is on, the prefetched payload won't carry
-    // Spotify's true original colors (prefetch has no access to `originalLyrics`),
-    // so it falls back to static/bg/gray coloring in that case — see the caveat
-    // in prefetchLyricsIfNeeded.
     if let prefetched = prefetchedResult, prefetched.trackId == trackIdentifier {
         prefetchedResult = nil
         writeDebugLog("[Lyrics] using prefetched result for \(trackIdentifier)")
